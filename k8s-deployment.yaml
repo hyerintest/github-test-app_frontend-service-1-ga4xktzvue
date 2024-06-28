@@ -1,0 +1,67 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: pvc-frontend-service-1-ga4xktzvue
+  namespace: 
+  annotations:
+    volume.beta.kubernetes.io/storage-class: ''
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-service-1-ga4xktzvue
+  namespace: 
+spec:
+  selector:
+    matchLabels:
+      app: frontend-service-1-ga4xktzvue
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: frontend-service-1-ga4xktzvue
+    spec:
+      containers:
+        - name: frontend-service-1-ga4xktzvue-container
+          image: //frontend-service-1-ga4xktzvue:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: pvc-frontend-service-1-ga4xktzvue-log
+              mountPath: /service-doc-root/logs
+          readinessProbe:
+            tcpSocket:
+              port: 80
+      volumes:
+        - name:  pvc-frontend-service-1-ga4xktzvue-log
+          persistentVolumeClaim:
+            claimName: pvc-frontend-service-1-ga4xktzvue
+      imagePullSecrets:
+        - name: regcred
+---
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app: frontend-service-1-ga4xktzvue
+  name: frontend-service-1-ga4xktzvue
+  namespace: 
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  selector:
+    app: frontend-service-1-ga4xktzvue
